@@ -28,7 +28,7 @@ contract("StakingRewards", (account) => {
   });
 
   describe("Duration staking check", function () {
-    it("Duration check 1", async () => {
+    it("Check duration equal 30 seconds", async () => {
       let duration = await instanceStaking.duration();
       assert.equal(
         duration,
@@ -36,7 +36,7 @@ contract("StakingRewards", (account) => {
         "Duration staking should last 30 seconds"
       );
     });
-    it("Duration check 2", async () => {
+    it("Check duration not equal 30 seconds", async () => {
       let duration = await instanceStaking.duration();
       assert.notEqual(
         duration,
@@ -219,8 +219,8 @@ contract("StakingRewards", (account) => {
         await instanceStaking.stake(amountStake, { from: account[1] });
         await instanceToken.mint(stakingAddress, amountRewards);
       });
-      describe("Check balance staker", function () {
-        it("Check balance staker after force withdraw", async () => {
+      describe("Check balance user", function () {
+        it("Check balance of user after force withdraw", async () => {
           await time.increase(durationTest - 10);
           await instanceStaking.forceWithdraw({ from: account[1] });
           let balanceStakerAfterForceWithdraw = await instanceToken.balanceOf(
