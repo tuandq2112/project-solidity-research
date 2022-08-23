@@ -256,5 +256,26 @@ contract("StakingRewards", (account) => {
         });
       });
     });
+    contract("forceWithdraw check 2", function () {
+      before(async () => {
+        await instanceToken.mint(account[1], amountMint);
+        balanceStakerBeforeStake = await instanceToken.balanceOf(account[1]);
+        await instanceToken.approve(instanceStaking.address, amountApprove, {
+          from: account[1],
+        });
+        await instanceToken.mint(stakingAddress, amountRewards);
+      });
+      describe("Check requireStaking", function () {
+        it("Check when user didn't stake but force withdraw", async () => {
+          let err = null;
+          try {
+            await instanceStaking.forceWithdraw({ from: account[1] });
+          } catch (error) {
+            err = error;
+          }
+          assert.ok(err instanceof Error);
+        });
+      });
+    });
   });
 });

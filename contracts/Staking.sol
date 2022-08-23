@@ -2,6 +2,14 @@
 pragma solidity ^0.8;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+/**  
+ * @dev  Staking is for user who want to get token by lock their token
+ *       in this StakingRewards contract and receive bonus token after
+ *       an amount of time 
+ * @dev  In this contract, duration staking is 30 seconds and
+ *       bonus reward is 10%
+*/
+
 contract StakingRewards{
     IERC20 public immutable token;
     address public owner;
@@ -53,7 +61,7 @@ contract StakingRewards{
     */ 
     function withdrawFulltime() external requireStaking resetStakeOfUser{
         require(timeEndStake[msg.sender] < block.timestamp ,"haven't time yet");
-        uint reward = balanceStakeOf[msg.sender] * 110 / 100; // rate reward = 10%
+        uint reward = balanceStakeOf[msg.sender] * 110 / 100; // bonus reward = 10%
         require(token.balanceOf(address(this)) > reward,"not enough balance");
         if(reward > 0) {
             token.transfer(msg.sender, reward);
