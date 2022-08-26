@@ -12,9 +12,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  *
  * @dev  In this contract, there are 3 duration staking is 30,60,90 seconds and
  *       bonus rate between tokenA and tokenB described below :
- *       Duration 30 seconds - 1 tokenA bouns 1000 tokenB
- *       Duration 60 seconds - 1 tokenA bouns 2500 tokenB
- *       Duration 90 seconds - 1 tokenA bouns 5000 tokenB
+ *       Duration 30 seconds - 1 tokenA bonus 1000 tokenB
+ *       Duration 60 seconds - 1 tokenA bonus 2500 tokenB
+ *       Duration 90 seconds - 1 tokenA bonus 5000 tokenB
  *       
  * @dev  In reality, different tokenB should have diffirent bonus rate with tokenA
 */
