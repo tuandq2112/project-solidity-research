@@ -3,17 +3,29 @@ pragma solidity ^0.8;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**  
- * @dev  Staking is for user who want to get token by lock their token
- *       in this StakingRewards contract and receive bonus token after
+ * @dev  TokenA : BNB,ETH,USDT,...
+ *       TokenB : IVIRSECoin 
+ *
+ * @dev  Staking is for user who want to get tokenB by lock their tokenA
+ *       in this StakingBonus contract and receive tokenB after
  *       an amount of time 
- * @dev  In this contract, duration staking is 30 seconds and
- *       bonus reward is 10%
+ *
+ * @dev  In this contract, there are 3 duration staking is 30,60,90 seconds and
+ *       bonus rate between tokenA and tokenB described below :
+ *       Duration 30 seconds - 1 tokenA bouns 1000 tokenB
+ *       Duration 60 seconds - 1 tokenA bouns 2500 tokenB
+ *       Duration 90 seconds - 1 tokenA bouns 5000 tokenB
+ *       
+ * @dev  In reality, different tokenB should have diffirent bonus rate with tokenA
 */
 
-contract StakingRewards{
-    IERC20 public immutable token;
+contract StakingBonus{
+    IERC20 public immutable tokenA;
+    IERC20 public immutable tokenB;
     address public owner;
-    uint public duration = 30;
+    uint public duration30 = 30;
+    uint public duration60 = 60;
+    uint public duration90 = 90;
     /**
      * @dev User address => staked amount of user
     */ 
@@ -22,18 +34,25 @@ contract StakingRewards{
      * @dev User address => time end stake of user
     */ 
     mapping(address => uint) private timeEndStake;
+     /**
+     * @dev User address => duration stake
+    */ 
+    mapping(address => uint) private durationUser;
 
-    constructor(address _token) {
+    constructor(address _tokenA,address _tokenB) {
         owner = msg.sender;
-        token = IERC20(_token);
+        tokenA = IERC20(_tokenA);
+        tokenB = IERC20(_tokenB);
     }
     /**
-     * @dev set stake of user = 0 and time end stake of user = 0 
+     * @dev set stake of user = 0, time end stake of user = 0 and duration
+     *      staking of user = 0
     */ 
     modifier resetStakeOfUser(){
         _;
         balanceStakeOf[msg.sender] = 0;
         timeEndStake[msg.sender] = 0;
+        durationUser[msg.sender] = 0;
     }
 
     /**
@@ -45,44 +64,91 @@ contract StakingRewards{
     }
 
     /**
-     * @dev Stake action
+     * @dev Stake duration 30 seconds
     */ 
-    function stake(uint _amount) external{ 
+    function stake30(uint _amount) external{ 
         require(timeEndStake[msg.sender] == 0, "already in stake");
         require(_amount > 0, "amount = 0");
-        token.transferFrom(msg.sender, address(this), _amount);
+        tokenA.transferFrom(msg.sender, address(this), _amount);
         balanceStakeOf[msg.sender] += _amount;
-        timeEndStake[msg.sender] = block.timestamp + duration;
+        timeEndStake[msg.sender] = block.timestamp + duration30;
+        durationUser[msg.sender] = duration30;
+
+    }
+
+    /**
+     * @dev Stake duration 60 seconds
+    */ 
+     function stake60(uint _amount) external{ 
+        require(timeEndStake[msg.sender] == 0, "already in stake");
+        require(_amount > 0, "amount = 0");
+        tokenA.transferFrom(msg.sender, address(this), _amount);
+        balanceStakeOf[msg.sender] += _amount;
+        timeEndStake[msg.sender] = block.timestamp + duration60;
+        durationUser[msg.sender] = duration60;
+    }
+
+    /**
+     * @dev Stake duration 90 seconds
+    */ 
+     function stake90(uint _amount) external{ 
+        require(timeEndStake[msg.sender] == 0, "already in stake");
+        require(_amount > 0, "amount = 0");
+        tokenA.transferFrom(msg.sender, address(this), _amount);
+        balanceStakeOf[msg.sender] += _amount;
+        timeEndStake[msg.sender] = block.timestamp + duration90;
+        durationUser[msg.sender] = duration90;
     }
 
     /**
      * @dev Withdraw when duration of staking is over
-     * @dev Get staking token and reward equal 10% of staking token 
+     * @dev Get staking tokenA and bonus tokenB   
     */ 
     function withdrawFulltime() external requireStaking resetStakeOfUser{
         require(timeEndStake[msg.sender] < block.timestamp ,"haven't time yet");
-        uint reward = balanceStakeOf[msg.sender] * 110 / 100; // bonus reward = 10%
-        require(token.balanceOf(address(this)) > reward,"not enough balance");
-        if(reward > 0) {
-            token.transfer(msg.sender, reward);
+
+        if(durationUser[msg.sender] == duration30){
+            uint bonus = balanceStakeOf[msg.sender]*1000;
+            require(tokenB.balanceOf(address(this)) >= bonus,"not enough balance");
+            if(bonus > 0) {
+                tokenA.transfer(msg.sender, balanceStakeOf[msg.sender]);
+                tokenB.transfer(msg.sender, bonus);
+            }
+        }
+
+        else if(durationUser[msg.sender] == duration60){
+            uint bonus = balanceStakeOf[msg.sender]*2500;
+            require(tokenB.balanceOf(address(this)) >= bonus,"not enough balance");
+            if(bonus > 0) {
+                tokenA.transfer(msg.sender, balanceStakeOf[msg.sender]);
+                tokenB.transfer(msg.sender, bonus);
+            }
+        }
+
+        else if(durationUser[msg.sender] == duration90){
+            uint bonus = balanceStakeOf[msg.sender]*5000;
+            require(tokenB.balanceOf(address(this)) >= bonus,"not enough balance");
+            if(bonus > 0) {
+                tokenA.transfer(msg.sender, balanceStakeOf[msg.sender]);
+                tokenB.transfer(msg.sender, bonus);
+            }
         }
     }
 
      /**
-     * @dev Get time left to earn reward of user
+     * @dev Get time left to earn reward of `_account`
     */ 
-    function viewTimeUntilWithDrawFullTime() view external requireStaking returns(uint){ 
-        require(timeEndStake[msg.sender] > block.timestamp ,"go to withdrawFullTime");
-        return (timeEndStake[msg.sender] - block.timestamp);
+    function viewTimeUntilWithDrawFullTime(address _account) view external returns(uint){ 
+        return timeEndStake[_account] - block.timestamp;
     }
  
     /**
      * @dev User force withdraw when the time had not yet come
-     * @dev When force withdraw, user don't get any reward, just get staking token 
+     * @dev When force withdraw, user don't get any bonus, just get staking token 
     */ 
     function forceWithdraw() external requireStaking resetStakeOfUser{
         require(timeEndStake[msg.sender] > block.timestamp ,"go to withdrawFullTime");
-        token.transfer(msg.sender, balanceStakeOf[msg.sender]);
+        tokenA.transfer(msg.sender, balanceStakeOf[msg.sender]);
     }
 
     /**
@@ -90,6 +156,26 @@ contract StakingRewards{
     */ 
     function getTimeEndStake(address _account) external view returns(uint){
         return timeEndStake[_account];
+    }
+
+    /**
+     * @dev Get time end stake of `_account`
+    */ 
+    function getBonusWillGet(address _account) external view returns(uint bonus){
+        if(durationUser[_account] == duration30){
+            bonus = balanceStakeOf[_account]*1000;
+            return bonus;
+        }
+
+        else if(durationUser[_account] == duration60){
+            bonus = balanceStakeOf[_account]*2500;
+            return bonus;
+        }
+
+        else if(durationUser[_account] == duration90){
+            bonus = balanceStakeOf[_account]*5000;
+            return bonus;
+        }
     }
 
     /**
