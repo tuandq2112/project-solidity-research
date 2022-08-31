@@ -5,7 +5,7 @@
 ------- prepare
 Client
 + npm run start
-+ pass in arguments to get coupon
++ enter arguments to get coupon
 + click button "update" to get coupon
 
 Smartcontract
