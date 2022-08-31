@@ -9,5 +9,6 @@ Client
 + click button "update" to get coupon
 
 Smartcontract
-+ enough token in balanceOf
++ deploy contract on remixIDE
++ enough token ERC20 in balanceOf(address this)
 + call func rewardToken to get token
